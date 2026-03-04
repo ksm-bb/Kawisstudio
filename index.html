@@ -34,6 +34,7 @@
     const IconChevronLeft = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"></polyline></svg>;
     const IconChevronRight = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>;
     const IconTrash = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
+    const IconFastForward = ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>;
 
     const COLORS = {
       blue: '#FFD2E6',
@@ -64,7 +65,17 @@
       searchInputBg: '#ffffff',
       filterBarBg: '#FFF0F6',
       bannerOverlayBg: '#ffffff',
+      progressBarBlue: '#454CB6',
+      progressBg: '#D4D6F5',
     };
+
+    const TASK_STATUSES = [
+      { id: 'status_1', label: 'รอช่างก่อนนะคะ', percent: 20, img: 'https://i.ibb.co/TxTf5F3C/1.png' },
+      { id: 'status_2', label: 'กำลังขึ้นโครง', percent: 40, img: 'https://i.ibb.co/V0q8R2X5/2.png' },
+      { id: 'status_3', label: 'ขึ้นหลังคา', percent: 60, img: 'https://i.ibb.co/4Z1YN98V/3.png' },
+      { id: 'status_4', label: 'เก็บรายละเอียด', percent: 80, img: 'https://i.ibb.co/sDCtFkC/4.png' },
+      { id: 'status_5', label: 'เสร็จสมบูรณ์', percent: 100, img: 'https://i.ibb.co/S45V8XSb/5.png' }
+    ];
 
     const FluffyCloud = React.memo(({ top, left, right, bottom, scale = 1, opacity = 0.7, delay = '0s', reverse = false }) => (
       <div className="absolute pointer-events-none drop-shadow-sm z-0" style={{ top, left, right, bottom, opacity, transform: `scale(${scale})` }}>
@@ -107,7 +118,7 @@
                   {char}
                 </span>
               ))}
-            </h1>
+             </h1>
               <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAuthModal(true)} className={`px-1.5 py-0.5 ml-1 rounded-full text-[7px] font-black uppercase tracking-widest border shadow-sm transition-all active:scale-95`} style={{ backgroundColor: isAdmin ? `${COLORS.buttonBg}99` : `${COLORS.buttonBg}cc`, color: isAdmin ? '#E86D9C' : '#9ca3af', borderColor: isAdmin ? '#FFD2E6' : '#e5e7eb' }}>
                 {isAdmin ? 'Admin' : 'Guest'}
               </button>
@@ -226,74 +237,98 @@
       </div>
     ));
 
-    const TaskCard = React.memo(({ task, isAdmin, onEdit, onToggleDoing, onToggleStatus }) => (
-      <div onClick={() => isAdmin && onEdit(task)} className={`relative mb-2 rounded-[22px] p-3 transition-all shadow-sm group backdrop-blur-sm ${isAdmin ? 'active:scale-[0.97] cursor-pointer' : ''}`}
-        style={{
-          backgroundColor: task.status === 'done' ? COLORS.cardBgDone : COLORS.cardBg,
-          borderWidth: '1px',
-          borderStyle: 'solid',
-          borderColor: task.status === 'doing' ? '#E86D9C' : (task.status === 'done' ? 'transparent' : COLORS.white),
-          opacity: task.status === 'done' ? 0.7 : 1
-        }}
-        >
-        {task.status === 'doing' && (
-           <div className="absolute inset-0 pointer-events-none z-0">
-             <div className="absolute -bottom-2 -left-3 text-[14px] animate-float-particle-1 drop-shadow-sm">🎀</div>
-             <div className="absolute top-[30%] -left-4 text-[10px] animate-float-particle-3 drop-shadow-sm" style={{ animationDelay: '1.5s' }}>🎀</div>
-             <div className="absolute -bottom-2 -right-3 text-[14px] animate-float-particle-2 drop-shadow-sm" style={{ animationDelay: '0.5s' }}>🎀</div>
-             <div className="absolute top-[30%] -right-4 text-[10px] animate-float-particle-1 drop-shadow-sm" style={{ animationDelay: '1.2s' }}>🎀</div>
-           </div>
-        )}
-        <div className="absolute left-2 top-3 bottom-3 w-1 rounded-full shadow-sm z-10" style={{ backgroundColor: task.channel === 'LINE' ? '#D5EDB5' : task.channel === 'FB' || task.channel === 'FACEBOOK' ? '#6E75D9' : task.channel === 'IG' ? '#E86D9C' : '#454CB6' }}></div>
-        <div className="pl-3 pr-1 relative z-10">
-          <div className="flex justify-between items-start mb-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-bold text-base truncate" style={{ color: COLORS.textMain }}>{task.client}</span>
-              <span className={`text-[7px] px-1.5 py-0.5 rounded-md font-black uppercase border ${
-                task.channel === 'LINE' ? 'text-[#7aad4e] bg-[#e7f9d4]/10 border-[#b8d394]/20' :
-                task.channel === 'FB' || task.channel === 'FACEBOOK' ? 'text-[#454CB6] bg-[#D4D6F5]/30 border-[#6E75D9]/20' :
-                task.channel === 'IG' ? 'text-[#E86D9C] bg-[#FFD2E6]/50 border-[#E86D9C]/30' :
-                task.channel === 'DISCORD' || task.channel === 'Discord' ? 'text-[#6E75D9] bg-[#D4D6F5]/30 border-[#6E75D9]/20' :
-                'bg-white/50 text-gray-400 border-gray-100'
-              }`}>{task.channel}</span>
-              {task.priority === 'urgent' && <span className="text-[9px] font-bold animate-pulse px-2 py-0.5 rounded-full shadow-sm" style={{ color: COLORS.pinkDeep, backgroundColor: COLORS.buttonBg }}>{'\u{1F525}'} ด่วน</span>}
-            </div>
-            <div className="flex items-center gap-1 text-[9px] font-black px-2.5 py-0.5 rounded-lg border shadow-sm" style={{ backgroundColor: '#FFF5F9', borderColor: '#FFD2E6', color: COLORS.pinkDeep }}>
-                <IconCalendar size={11} style={{ color: COLORS.pinkDeep }} />
-                {new Date(task.deadline).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-end mt-1">
-            <div className="flex-1 min-w-0 mr-4 flex flex-col">
-              <span className={`text-[10px] font-bold truncate ${task.status === 'done' ? 'line-through text-gray-300' : 'text-gray-400'}`}>{task.type}</span>
-              {task.details && (
-                <span className={`text-[11px] font-medium truncate mt-0.5 ${task.status === 'done' ? 'text-gray-300' : 'text-gray-600'}`}>{task.details}</span>
-              )}
-            </div>
+    const TaskCard = React.memo(({ task, isAdmin, onEdit, onCycleStatus }) => {
+      const currentStatusInfo = TASK_STATUSES.find(s => s.id === task.status) || TASK_STATUSES[0];
+      const isDone = currentStatusInfo.id === 'status_5';
 
-            {isAdmin ? (
-              <div className="flex gap-1.5">
-                <button onClick={(e) => onToggleDoing(e, task.id)} className={`relative w-[28px] h-[28px] rounded-[8px] flex items-center justify-center transition-all active:scale-90 shadow-[0_3px_10px_rgba(232,109,156,0.3)]`} style={{ color: task.status === 'doing' ? '#E86D9C' : '#B0BEC5', backgroundColor: task.status === 'doing' ? '#FFF5F9' : COLORS.buttonBg, borderWidth: '2px', borderColor: `${COLORS.cardBorder}cc` }}>
-                  <div className={`${task.status === 'doing' ? 'animate-spin-slow' : ''} flex items-center justify-center`}>
-                    <IconLoader size={14} />
-                  </div>
-                </button>
-                <button onClick={(e) => onToggleStatus(e, task.id)} className={`relative w-[28px] h-[28px] rounded-[8px] flex items-center justify-center transition-all active:scale-90 shadow-[0_3px_10px_rgba(232,109,156,0.3)]`} style={{ color: task.status === 'done' ? '#E86D9C' : '#B0BEC5', backgroundColor: task.status === 'done' ? '#FFF5F9' : COLORS.buttonBg, borderWidth: '2px', borderColor: `${COLORS.cardBorder}cc` }}>
-                  <IconCheck size={16} />
-                </button>
+      return (
+        <div className="flex flex-row items-center w-full mb-3 gap-2 group">
+          {/* รูป PNG อยู่นอกการ์ด พร้อมเช็คสถานะเพื่อเล่นอนิเมชัน */}
+          <div className="w-[55px] h-[55px] shrink-0 relative flex items-center justify-center">
+             <img 
+               key={task.status} 
+               src={currentStatusInfo.img} 
+               alt={currentStatusInfo.label} 
+               className={`w-full h-full object-contain ${
+                 isDone 
+                   ? 'animate-mario-jump-once drop-shadow-[0_0_8px_rgba(232,109,156,0.6)]' 
+                   : 'animate-bounce-slow drop-shadow-sm'
+               }`} 
+             />
+          </div>
+
+          <div onClick={() => isAdmin && onEdit(task)} className={`flex-1 min-w-0 relative rounded-[22px] p-3 transition-all shadow-sm backdrop-blur-sm ${isAdmin ? 'active:scale-[0.97] cursor-pointer' : ''}`}
+            style={{
+              backgroundColor: isDone ? COLORS.cardBgDone : COLORS.cardBg,
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: isDone ? 'transparent' : COLORS.white,
+              opacity: isDone ? 0.75 : 1
+            }}
+            >
+            <div className="flex flex-col w-full relative z-10">
+              
+              {/* ชื่อลูกค้า ชนิดด่วน แพลตฟอร์ม และวันที่ */}
+              <div className="flex justify-between items-start mb-1.5 gap-1">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span className="font-bold text-[14px] truncate leading-tight" style={{ color: COLORS.textMain }}>{task.client}</span>
+                  {task.priority === 'urgent' && !isDone && <span className="text-[7px] font-bold animate-pulse px-1.5 py-0.5 rounded-md shadow-sm shrink-0" style={{ color: COLORS.pinkDeep, backgroundColor: COLORS.buttonBg }}>{'\u{1F525}'} ด่วน</span>}
+                  <span className={`text-[7px] px-1.5 py-0.5 rounded-md font-black uppercase border leading-none shrink-0 ${
+                    task.channel === 'LINE' ? 'text-[#7aad4e] bg-[#e7f9d4]/10 border-[#b8d394]/20' :
+                    task.channel === 'FB' || task.channel === 'FACEBOOK' ? 'text-[#454CB6] bg-[#D4D6F5]/30 border-[#6E75D9]/20' :
+                    task.channel === 'IG' ? 'text-[#E86D9C] bg-[#FFD2E6]/50 border-[#E86D9C]/30' :
+                    task.channel === 'DISCORD' || task.channel === 'Discord' ? 'text-[#6E75D9] bg-[#D4D6F5]/30 border-[#6E75D9]/20' :
+                    'bg-white/50 text-gray-400 border-gray-100'
+                  }`}>{task.channel}</span>
+                </div>
+                
+                <div className="flex items-center gap-1 text-[8px] font-black px-1.5 py-0.5 rounded-md border shadow-sm shrink-0 leading-none" style={{ backgroundColor: '#FFF5F9', borderColor: '#FFD2E6', color: COLORS.pinkDeep }}>
+                    <IconCalendar size={9} style={{ color: COLORS.pinkDeep }} />
+                    {new Date(task.deadline).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                </div>
               </div>
-            ) : (
-              <div className="flex items-center">
-                {task.status === 'doing' && <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-md border shadow-sm" style={{ color: '#E86D9C', backgroundColor: '#FFF5F9', borderColor: '#FFD2E6' }}><IconLoader size={10} className="animate-spin-slow"/> กำลังทำ</span>}
-                {task.status === 'done' && <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded-md border shadow-sm" style={{ color: '#454CB6', backgroundColor: '#F0F0FC', borderColor: '#D4D6F5' }}><IconCheck size={10} /> เสร็จแล้ว</span>}
-                {task.status === 'todo' && <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1 px-2 py-1 rounded-md border border-gray-100 shadow-sm" style={{ backgroundColor: COLORS.buttonBg }}><IconClock size={10} /> รอคิว</span>}
+              
+              {/* ประเภทงานและรายละเอียด */}
+              <div className="w-full min-w-0 mb-2">
+                <span className={`text-[10px] font-bold truncate block ${isDone ? 'line-through text-gray-400' : 'text-gray-500'}`}>
+                  {task.type} {task.details && <span className="font-medium opacity-80">({task.details})</span>}
+                </span>
               </div>
-            )}
+
+              {/* Progress bar เรืองแสง และปุ่มแอดมิน */}
+              <div className="flex items-center gap-3 mt-auto w-full">
+                <div className="flex-1 min-w-0">
+                   <div className="flex justify-between items-end mb-1">
+                      <span className="text-[10px] font-black leading-none truncate pr-1" style={{color: COLORS.blueDeep}}>{currentStatusInfo.label}</span>
+                      <span className="text-[9px] font-black leading-none shrink-0" style={{color: COLORS.blueDeep}}>{currentStatusInfo.percent}%</span>
+                   </div>
+                   
+                   <div className="h-2.5 w-full rounded-full overflow-hidden border-[1px] shadow-[0_0_6px_rgba(232,109,156,0.4)] relative bg-[#FFF0F8]" style={{borderColor: COLORS.pinkDeep}}>
+                      <div className="h-full rounded-full transition-all duration-700 ease-in-out relative progress-stripes" style={{width: `${currentStatusInfo.percent}%`, backgroundColor: COLORS.progressBarBlue}}>
+                      </div>
+                   </div>
+                </div>
+
+                {isAdmin && (
+                  <button 
+                    onClick={(e) => onCycleStatus(e, task.id)} 
+                    className="w-[32px] h-[32px] shrink-0 rounded-[10px] flex items-center justify-center transition-all active:scale-90 shadow-sm border-2" 
+                    style={{ 
+                      backgroundColor: COLORS.buttonBg, 
+                      borderColor: isDone ? COLORS.cardBorder : COLORS.purple,
+                      color: isDone ? COLORS.pinkDeep : COLORS.blueDeep
+                    }}
+                    title="เลื่อนสถานะถัดไป"
+                  >
+                    <IconFastForward size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    ));
+      );
+    });
 
     const CalendarView = React.memo(({ currentMonth, setCurrentMonth, selectedDate, setSelectedDate, today, tasks }) => {
       const year = currentMonth.getFullYear();
@@ -395,7 +430,10 @@
       const [selectedNextDate, setSelectedNextDate] = useState('');
       const [isBouncing, setIsBouncing] = useState(false);
 
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXAiV5JuPnHU45IIRgRGokgX5t2RymOF4vQsi1YJcTJniUcsOhYKQ0Thi2SnbHGdwB/exec";
+      // ==========================================
+      // ตรงนี้: นำลิงก์ Web App API ตัวใหม่ของคุณมาวางทับได้เลยครับ!
+      // ==========================================
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby4kqalfKIeD2xlYdgiaeYzabuZ4IneaYd_b9c1wFwOGOpqsF1NMwe1PeV3wqjfLpx2WQ/exec";
 
       const fetchAPI = async (payload) => {
         try {
@@ -417,7 +455,13 @@
           .then(res => res.json())
           .then(response => {
             if (response.status === 'success') {
-              setTasks(response.data.tasks || []);
+              const formattedTasks = (response.data.tasks || []).map(t => {
+                 if (!TASK_STATUSES.some(s => s.id === t.status)) {
+                    return {...t, status: 'status_1'};
+                 }
+                 return t;
+              });
+              setTasks(formattedTasks);
               if (response.data.taskTypes && response.data.taskTypes.length > 0) setTaskTypes(response.data.taskTypes);
               if (response.data.channels && response.data.channels.length > 0) setChannels(response.data.channels);
               if (response.data.profileImage) setProfileImage(response.data.profileImage);
@@ -458,7 +502,7 @@
       }, []);
 
       const todayTasks = useMemo(() => tasks.filter(t => t.deadline === today), [tasks, today]);
-      const doneToday = useMemo(() => todayTasks.filter(t => t.status === 'done').length, [todayTasks]);
+      const doneToday = useMemo(() => todayTasks.filter(t => t.status === 'status_5').length, [todayTasks]);
       const progress = todayTasks.length === 0 ? 0 : Math.round((doneToday / todayTasks.length) * 100);
 
       const nextQueueDate = useMemo(() => {
@@ -476,25 +520,15 @@
         return today;
       }, [tasks, selectedNextDate]);
 
-      const waitingCount = useMemo(() => tasks.filter(t => t.status !== 'done').length, [tasks]);
+      const waitingCount = useMemo(() => tasks.filter(t => t.status !== 'status_5').length, [tasks]);
 
-      const toggleStatus = useCallback((e, id) => {
+      const cycleStatus = useCallback((e, id) => {
         e.stopPropagation();
         setTasks(prev => prev.map(t => {
           if (t.id === id) {
-            const newStatus = t.status === 'done' ? 'todo' : 'done';
-            fetchAPI({ action: 'updateTaskStatus', taskId: id, newStatus: newStatus });
-            return { ...t, status: newStatus };
-          }
-          return t;
-        }));
-      }, []);
-
-      const toggleDoing = useCallback((e, id) => {
-        e.stopPropagation();
-        setTasks(prev => prev.map(t => {
-          if (t.id === id) {
-            const newStatus = t.status === 'doing' ? 'todo' : 'doing';
+            const currentIndex = TASK_STATUSES.findIndex(s => s.id === t.status);
+            const nextIndex = currentIndex < TASK_STATUSES.length - 1 ? currentIndex + 1 : 0;
+            const newStatus = TASK_STATUSES[nextIndex].id;
             fetchAPI({ action: 'updateTaskStatus', taskId: id, newStatus: newStatus });
             return { ...t, status: newStatus };
           }
@@ -520,6 +554,7 @@
           priority: formData.get('priority') ? 'urgent' : 'normal',
           deadline: formData.get('deadline'),
           details: formData.get('details'),
+          status: formData.get('status') || 'status_1',
         };
         fetchAPI({ action: 'saveOrUpdateTask', task: taskData })
           .then(res => {
@@ -552,7 +587,7 @@
 
       const filteredAllTasks = useMemo(() => tasks.filter(t => {
         const matchSearch = t.type.toLowerCase().includes(searchQuery.toLowerCase()) || t.client.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchFilter = filterType === 'all' || (filterType === 'pending' && t.status !== 'done') || (filterType === 'done' && t.status === 'done');
+        const matchFilter = filterType === 'all' || (filterType === 'pending' && t.status !== 'status_5') || (filterType === 'done' && t.status === 'status_5');
         return matchSearch && matchFilter;
       }), [tasks, searchQuery, filterType]);
 
@@ -567,7 +602,7 @@
              <div className="flex flex-col items-center z-10 animate-breathe">
                <div className="flex items-center gap-1.5 px-6 py-2.5 backdrop-blur-sm rounded-full shadow-sm" style={{ backgroundColor: `${COLORS.buttonBg}99`, borderWidth: '2px', borderColor: COLORS.cardBorder }}>
                  <p className="text-[12px] font-black tracking-widest" style={{ color: COLORS.textMain }}>กำลังโหลดข้อมูล</p>
-                 <div className="flex gap-1 pt-1 ml-1">
+                 <div className="flex gap-1 pt-1 -ml-1">
                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#E86D9C', animationDelay: '0s' }}></span>
                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#454CB6', animationDelay: '0.15s' }}></span>
                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: '#6E75D9', animationDelay: '0.3s' }}></span>
@@ -634,7 +669,7 @@
                     <div className="h-[1px] flex-1 mx-3" style={{ background: 'linear-gradient(to right, #FFD2E666, transparent)' }}></div>
                   </div>
                   <div className="space-y-1">
-                    {todayTasks.length > 0 ? todayTasks.map(t => <TaskCard key={t.id} task={t} isAdmin={isAdmin} onEdit={handleEditTask} onToggleDoing={toggleDoing} onToggleStatus={toggleStatus} />) : (
+                    {todayTasks.length > 0 ? todayTasks.map(t => <TaskCard key={t.id} task={t} isAdmin={isAdmin} onEdit={handleEditTask} onCycleStatus={cycleStatus} />) : (
                       <div className="text-center py-10 rounded-[28px] border-2 border-dashed" style={{ backgroundColor: `${COLORS.cardWhite}4d`, borderColor: '#FFD2E680' }}>
                         <p className="text-[9px] font-bold uppercase tracking-widest opacity-40" style={{ color: COLORS.pinkDeep }}>Sky is clear ✨</p>
                       </div>
@@ -650,7 +685,7 @@
 
                   <div className="flex gap-2 mb-3 p-1.5 rounded-full backdrop-blur-md shadow-sm" style={{ backgroundColor: `${COLORS.filterBarBg}80`, borderWidth: '3px', borderColor: COLORS.cardBorder }}>
                       <button onClick={() => setFilterType('all')} className="flex-1 text-[9px] font-black py-2 rounded-full transition-all tracking-wider" style={{ color: filterType === 'all' ? COLORS.pinkDeep : '#9ca3af', backgroundColor: filterType === 'all' ? COLORS.buttonBg : 'transparent' }}>ทั้งหมด</button>
-                      <button onClick={() => setFilterType('pending')} className="flex-1 text-[9px] font-black py-2 rounded-full transition-all tracking-wider" style={{ color: filterType === 'pending' ? COLORS.orangeDeep : '#9ca3af', backgroundColor: filterType === 'pending' ? COLORS.buttonBg : 'transparent' }}>ยังไม่ได้เริ่ม</button>
+                      <button onClick={() => setFilterType('pending')} className="flex-1 text-[9px] font-black py-2 rounded-full transition-all tracking-wider" style={{ color: filterType === 'pending' ? COLORS.orangeDeep : '#9ca3af', backgroundColor: filterType === 'pending' ? COLORS.buttonBg : 'transparent' }}>ยังไม่เสร็จ</button>
                       <button onClick={() => setFilterType('done')} className="flex-1 text-[9px] font-black py-2 rounded-full transition-all tracking-wider" style={{ color: filterType === 'done' ? COLORS.blueDeep : '#9ca3af', backgroundColor: filterType === 'done' ? COLORS.buttonBg : 'transparent' }}>เสร็จแล้ว</button>
                   </div>
 
@@ -667,7 +702,7 @@
                   {isCalendarView && <CalendarView currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} selectedDate={selectedDate} setSelectedDate={setSelectedDate} today={today} tasks={tasks} />}
 
                   <div className="space-y-1">
-                    {displayedTasks.length > 0 ? displayedTasks.map(t => <TaskCard key={t.id} task={t} isAdmin={isAdmin} onEdit={handleEditTask} onToggleDoing={toggleDoing} onToggleStatus={toggleStatus} />) : (
+                    {displayedTasks.length > 0 ? displayedTasks.map(t => <TaskCard key={t.id} task={t} isAdmin={isAdmin} onEdit={handleEditTask} onCycleStatus={cycleStatus} />) : (
                       <div className="text-center py-10 rounded-[28px] border-[4px] border-dashed shadow-sm mt-4" style={{ backgroundColor: `${COLORS.cardWhite}4d`, borderColor: COLORS.cardBorder }}>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60" style={{ color: COLORS.textSoft }}>
                           {isCalendarView ? "วันนี้คิวว่าง ✨" : "No records found ✨"}
@@ -691,7 +726,7 @@
                   </button>
                   {isAdmin && (
                     <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-                      <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="w-14 h-14 rounded-full text-white flex items-center justify-center active:scale-90 transition-transform" style={{ backgroundColor: '#454CB6', borderWidth: '4px', borderColor: COLORS.cardBorder, boxShadow: '0 8px 24px rgba(69,76,182,0.5)' }}>
+                      <button onClick={() => { setEditingTask(null); setShowModal(true); }} className="w-14 h-14 rounded-full text-white flex items-center justify-center active:scale-95 transition-transform" style={{ backgroundColor: '#454CB6', borderWidth: '4px', borderColor: COLORS.cardBorder, boxShadow: '0 8px 24px rgba(69,76,182,0.5)' }}>
                         <IconPlus size={24} />
                       </button>
                     </div>
@@ -721,17 +756,25 @@
                        </label>
                      </div>
                      <input name="client" required defaultValue={editingTask?.client || ''} className="w-full p-3.5 rounded-2xl outline-none text-[11px] shadow-sm transition-all" style={{ backgroundColor: COLORS.cardInner, borderWidth: '1px', borderColor: '#FFD2E6' }} placeholder="ชื่อลูกค้า" />
+                     
                      <div className="flex flex-col gap-2">
                         <input list="taskTypesList" name="type" required defaultValue={editingTask?.type || ''} className="w-full p-3.5 rounded-2xl font-black text-[10px] outline-none shadow-sm" style={{ backgroundColor: COLORS.cardInner, borderWidth: '1px', borderColor: '#FFD2E6' }} placeholder="ประเภทงาน" />
                         <datalist id="taskTypesList">
                           {taskTypes.map(type => <option key={type} value={type} />)}
                         </datalist>
+                        
                         <input list="channelsList" name="channel" required defaultValue={editingTask?.channel || ''} className="w-full p-3.5 rounded-2xl font-black text-[10px] outline-none shadow-sm" style={{ backgroundColor: COLORS.cardInner, borderWidth: '1px', borderColor: '#D4D6F5' }} placeholder="ช่องทาง" />
                         <datalist id="channelsList">
                           {channels.map(ch => <option key={ch} value={ch} />)}
                         </datalist>
                      </div>
+
                      <textarea name="details" rows="2" defaultValue={editingTask?.details || ''} className="w-full p-3.5 rounded-2xl outline-none text-[11px] shadow-sm transition-all resize-none" style={{ backgroundColor: COLORS.cardInner, borderWidth: '1px', borderColor: '#FFD2E6' }} placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)..."></textarea>
+                     
+                     <select name="status" defaultValue={editingTask?.status || 'status_1'} className="w-full p-3.5 rounded-2xl font-black text-[10px] outline-none shadow-sm cursor-pointer" style={{ backgroundColor: COLORS.cardInner, borderWidth: '1px', borderColor: '#D4D6F5', color: COLORS.blueDeep }}>
+                        {TASK_STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                     </select>
+
                      <div className="flex items-center justify-between p-1.5 pl-4 rounded-2xl border transition-all hover:shadow-sm group mt-1" style={{ backgroundColor: '#FFF5F9', borderColor: '#FFD2E6' }}>
                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-black" style={{ color: COLORS.pinkDeep }}>
                          <IconCalendar size={12} /><span>Deadline</span>
@@ -846,22 +889,43 @@
             @keyframes float-particle-1 { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translateY(-20px); opacity: 0; } }
             @keyframes float-particle-2 { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translateY(-15px) translateX(5px); opacity: 0; } }
             @keyframes float-particle-3 { 0% { transform: translateY(0); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translateY(-25px) translateX(-5px); opacity: 0; } }
-            @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+            @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
             @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
             @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             @keyframes text-wave { 0%, 20%, 100% { transform: translateY(0px); } 10% { transform: translateY(-5px); } }
             @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-            .animate-text-wave { animation: text-wave 4s ease-in-out infinite; }
-            .animate-breathe { animation: breathe 4s ease-in-out infinite; transform-origin: center; }
-            .animate-float-particle-1 { animation: float-particle-1 3s ease-out infinite; }
-            .animate-float-particle-2 { animation: float-particle-2 4s ease-out infinite 1s; }
-            .animate-float-particle-3 { animation: float-particle-3 3.5s ease-out infinite 0.5s; }
-            .animate-float { animation: float 15s ease-in-out infinite; }
-            .animate-float-reverse { animation: float-reverse 18s ease-in-out infinite; }
-            .animate-bounce-slow { animation: bounce-slow 4s ease-in-out infinite; }
-            .animate-slideUp { animation: slideUp 0.3s ease-out; }
-            .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
-            .animate-spin-slow { animation: spin-slow 4s linear infinite; }
+            
+            /* อนิเมชัน Mario Jump เหรียญมาริโอ้ (เล่นรอบเดียว) */
+            @keyframes mario-jump-once {
+              0% { transform: translateY(0) scale(1) rotateY(0deg); }
+              40% { transform: translateY(-40px) scale(1.2) rotateY(180deg); }
+              70% { transform: translateY(0) scale(1) rotateY(360deg); }
+              85% { transform: translateY(-10px) scale(1) rotateY(360deg); }
+              100% { transform: translateY(0) scale(1) rotateY(360deg); }
+            }
+            .animate-mario-jump-once {
+              animation: mario-jump-once 1.2s ease-in-out forwards;
+            }
+
+            /* อนิเมชันสำหรับลายริ้วหลอดเปอร์เซ็นต์ */
+            .progress-stripes {
+               background-image: linear-gradient(
+                 45deg,
+                 rgba(255, 255, 255, 0.2) 25%,
+                 transparent 25%,
+                 transparent 50%,
+                 rgba(255, 255, 255, 0.2) 50%,
+                 rgba(255, 255, 255, 0.2) 75%,
+                 transparent 75%,
+                 transparent
+               );
+               background-size: 20px 20px;
+               animation: moveStripes 1s linear infinite;
+            }
+            @keyframes moveStripes {
+               0% { background-position: 0 0; }
+               100% { background-position: 20px 0; }
+            }
           `}</style>
         </div>
       );
@@ -872,4 +936,3 @@
   </script>
 </body>
 </html>
-
